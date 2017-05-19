@@ -1,0 +1,5 @@
+name = LightBox Formatter
+description =  Realisation Formatter Light Box
+package = SoftGroup
+core = 7.x
+files[] = lightbox_formatter.module

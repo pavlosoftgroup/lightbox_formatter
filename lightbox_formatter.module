@@ -1,0 +1,120 @@
+<?php
+function lightbox_formatter_init() {
+
+  drupal_add_css(drupal_get_path('module', 'lightbox_formatter') . '/css/colorbox.css');
+  drupal_add_js(drupal_get_path('module', 'lightbox_formatter') . '/js/jquery.colorbox.js');
+  drupal_add_js(drupal_get_path('module', 'lightbox_formatter') . '/js/lightbox_formatter.js');
+
+
+}
+
+function lightbox_formatter_field_formatter_info() {
+  return array(
+    'lightbox' => array(
+      'label' => t('LightBox: Formatter'),
+      'field types' => array('text_long')
+    ),
+    'lightbox_iframe' => array(
+      'label' => t('LightBox: Iframe Formatter'),
+      'field types' => array('text_long')
+    )
+  );
+}
+
+function lightbox_formatter_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
+  $element = array();
+  switch ($display['type']) {
+    case 'lightbox':
+
+      foreach ($items as $delta => $item) {
+        $url = preg_replace('/\<iframe.*src=[\"\'](.*)[\'\"]/', '$1', $item['value']);
+        // Youtube
+        if (preg_match('/[http|https]+:\/\/(?:www\.|)youtube\.com\/watch\?(?:.*)?v=([a-zA-Z0-9_\-]+)/i', $url, $matches) || preg_match('/[http|https]+:\/\/(?:www\.|)youtube\.com\/embed\/([a-zA-Z0-9_\-]+)/i', $url, $matches) || preg_match('/[http|https]+:\/\/(?:www\.|)youtu\.be\/([a-zA-Z0-9_\-]+)/i', $url, $matches)) {
+          $video = 'http://www.youtube.com/embed/' . $matches[1];
+          $image = 'http://img.youtube.com/vi/' . $matches[1] . '/0.jpg';
+          $array = array(
+            'video' => $video . '?rel=0&amp;wmode=transparent&amp;',
+            'image' => $image,
+            'class' => 'youtube',
+          );
+        }
+        // Vimeo
+        else {
+          if (preg_match('/[http|https]+:\/\/(?:www\.|)vimeo\.com\/([a-zA-Z0-9_\-]+)(&.+)?/i', $url, $matches) || preg_match('/[http|https]+:\/\/player\.vimeo\.com\/video\/([a-zA-Z0-9_\-]+)(&.+)?/i', $url, $matches)) {
+            $video = 'http://player.vimeo.com/video/' . $matches[1];
+            $image = '';
+            if ($xml = simplexml_load_file('https://vimeo.com/api/oembed.xml?url=https%3A//vimeo.com/' . $matches[1] . '.xml')) {
+              $image = $xml->thumbnail_url_with_play_button;
+            }
+            $array = array(
+              'video' => $video,
+              'image' => $image,
+              'class' => 'vimeo',
+            );
+          }
+        }
+
+        $image = '<div class="play_icon">';
+        $image .= theme_image(array(
+          'path' => $array['image'],
+          'alt' => '',
+          'title' => '',
+          'width' => '',
+          'height' => '',
+          'attributes' => array(
+            'class' => array('lightbox_icon'),  //.$icon->id,
+          ),
+        ));
+        $image .= '</div>';
+
+        $link = l($image, $array['video'], array(
+          'html' => TRUE,
+          'attributes' => array(
+            'class' => array($array['class']),
+          ),
+        ));
+        $output = '<div>';
+        $output .= $link;
+        $output .= '</div>';
+
+        $element[0]['#markup'] = $output;
+        return $element;
+
+
+
+      }
+      break;
+    case
+    'lightbox_iframe':
+    ;
+
+      foreach ($items as $delta => $item) {
+        $array = array(
+          ''
+        );
+        $output = '<div id="wriper-iframe">';
+        $output .='<iframe width="805" height="505" src="https://my.matterport.com/show/?m='.$item['value'].'" frameborder=\'0\' webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>';
+        $output .= '<div id="div-iframe">';
+        $output .= '</div>';
+        $output .= '</div>';
+        $link = l($output,'https://my.matterport.com/show/?m='.$item['value'] , array(
+          'html' => TRUE,
+          'attributes' => array(
+            'class' => array(
+              'iframe'
+            ),
+          ),
+        ));
+        $element[0]['#markup'] = $link;
+
+
+
+      }
+      return $element;
+
+
+      break;
+      }
+
+
+  }
